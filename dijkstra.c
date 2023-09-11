@@ -127,57 +127,55 @@ int main(int argc, char *argv[]) {
     char *token = strtok_r(line, ";", &line); // Puntero al token
     // Leemos los tokens de la línea
     while (token != NULL) {
-      int i = 0; // auxiliar
-      int index = -1;
-      int destination = -1;
-      int weight = -1;
-      char *end_token;
-      char *token_inner = strtok_r(token, ",", &end_token);
+      int i = 0;                                            // auxiliar
+      int index = -1;                                       // index of the node
+      int destination = -1;                                 // index of the destination node
+      int weight = -1;                                      // weight of the edge
+      char *end_token;                                      // end of the token
+      char *token_inner = strtok_r(token, ",", &end_token); // inner token
       while (token_inner != NULL && i < 3) {
-        if (i == 0) {
-          token_inner = trimwhitespace(token_inner);
-          token_inner += 1;
-          index = get_index_of_node(token_inner);
-          if (index == -1) {
-            index = number_of_nodes;
-            nodes[index] = malloc(sizeof(char) * (strlen(token_inner) + 1));
-            strcpy(nodes[index], token_inner);
-            ++number_of_nodes;
+        if (i == 0) {                                                        // if it is the first token
+          token_inner = trimwhitespace(token_inner);                         // trim the white spaces
+          token_inner += 1;                                                  // remove the first character (
+          index = get_index_of_node(token_inner);                            // get the index of the node
+          if (index == -1) {                                                 // if the node is not present in the array
+            index = number_of_nodes;                                         // set the index to the number of nodes
+            nodes[index] = malloc(sizeof(char) * (strlen(token_inner) + 1)); // allocate memory for the node
+            strcpy(nodes[index], token_inner);                               // copy the node to the array
+            ++number_of_nodes;                                               // increment the number of nodes
           }
-        } else if (i == 1) {
-          token_inner = trimwhitespace(token_inner);
-          destination = get_index_of_node(token_inner);
-          if (destination == -1) {
-            destination = number_of_nodes;
-            nodes[destination] = malloc(sizeof(char) * (strlen(token_inner) + 1));
-            strcpy(nodes[destination], token_inner);
-            ++number_of_nodes;
+        } else if (i == 1) {                                                       // if it is the second token
+          token_inner = trimwhitespace(token_inner);                               // trim the white spaces
+          destination = get_index_of_node(token_inner);                            // get the index of the node
+          if (destination == -1) {                                                 // if the node is not present in the array
+            destination = number_of_nodes;                                         // set the index to the number of nodes
+            nodes[destination] = malloc(sizeof(char) * (strlen(token_inner) + 1)); // allocate memory for the node
+            strcpy(nodes[destination], token_inner);                               // copy the node to the array
+            ++number_of_nodes;                                                     // increment the number of nodes
           }
-        } else if (i == 2) {
-          token_inner = trimwhitespace(token_inner);
-          char *s = token_inner;
+        } else if (i == 2) {                         // if it is the third token
+          token_inner = trimwhitespace(token_inner); // trim the white spaces
+          char *s = token_inner;                     // auxiliar
           // This while is to erase the the character ) and replace it by \n in order of no affect the atoi cast!
           while (*s != ')') {
             ++s;
           }
-          *s = '\0';
-          weight = atoi(token_inner);
+          *s = '\0';                  // replace the ) by \0
+          weight = atoi(token_inner); // convert the string to int
         } else {
           printf("Parsing error. Not possible four values for edege\n");
         }
-        i++;
-        token_inner = strtok_r(NULL, ",", &end_token);
+        i++;                                           // increment the auxiliar
+        token_inner = strtok_r(NULL, ",", &end_token); // get the next token
       }
-      graph[index][destination] = weight;
-      if (is_directed == 0) {
-        graph[destination][index] = weight;
+      graph[index][destination] = weight;   // set the weight of the edge
+      if (is_directed == 0) {               // if the graph is not directed
+        graph[destination][index] = weight; // set the weight of the edge in the other direction
       }
-      token = strtok_r(NULL, ";", &line);
+      token = strtok_r(NULL, ";", &line); // get the next token
     }
   }
-
-  print_graph();
-
   // Cerramos el fichero
   fclose(fp);
+  print_graph();
 }
