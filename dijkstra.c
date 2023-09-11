@@ -440,15 +440,7 @@ int (*dijkstra_with_heap(char *initialNode, int (*adj)[20]))[3] {
   return table;
 }
 
-// implementemos el algoritmo de Dijkstra
-// Dijkstra's algorithm in C
-// https://www.programiz.com/dsa/dijkstra-algorithm
-// argc es el número de argumentos que se le pasan al programa incluyendo el nombre del programa
-// argv es un array de strings que contiene los argumentos que se le pasan al programa
 int main(int argc, char *argv[]) {
-  // printf("argc: %d\n", argc);
-  // int logitud = sizeof(*argv);
-  // printf("logitud: %d\n", logitud);
   FILE *fp;          // Puntero al fichero
   char *line = NULL; // Puntero a la línea
   size_t len = 0;    // Longitud de la línea
@@ -546,13 +538,16 @@ int main(int argc, char *argv[]) {
   // Cerramos el fichero
   fclose(fp);
   print_graph();
-  // printf("\n");
-  // printf("Djikstra sin heap\n");
-  // int(*table)[3] = dijkstra("A", graph);
-  // print_table(table);
-  // free(table);
-  // printf("\n");
+  printf("\n");
+  printf("Djikstra sin heap\n");
+  int(*table)[3] = dijkstra("A", graph);
+  print_table(table);
+  free(table);
+  printf("\n");
   printf("Djikstra con heap\n");
   int(*table2)[3] = dijkstra_with_heap("A", graph);
   print_table(table2);
+  free(table2);
+
+  return 0;
 }
