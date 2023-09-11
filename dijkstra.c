@@ -409,10 +409,10 @@ int (*dijkstra_with_heap(char *initialNode, int (*adj)[20]))[3] {
 
   // agregamos al nodo inicial a la cola de prioridad
   pq_insert(pq, index, 0);
+  table[index][1] = 0;
   int priority;
   while (pq_size(pq) > 0) {
     pq_delete_top(pq, &index, &priority);
-    printf("pq_size: %d, index: %d, priority: %d \n", pq_size(pq), index, priority);
     visited[index] = 1;
     // para cada vecino del nodo
     for (int i = 0; i < number_of_nodes; i++) {
@@ -427,8 +427,9 @@ int (*dijkstra_with_heap(char *initialNode, int (*adj)[20]))[3] {
             table[i][2] = index;
           }
         } else {
-          pq_insert(pq, i, table[index][1] + adj[index][i]);
-          table[i][1] = table[index][1] + adj[index][i];
+          priority = table[index][1] + adj[index][i];
+          pq_insert(pq, i, priority);
+          table[i][1] = priority;
           // actualizamos el nodo previo del vecino
           table[i][2] = index;
         }
