@@ -4,33 +4,7 @@
 #include <string.h>
 
 #define MAX_NODES 20
-
-typedef struct pq_struct PQ;
-
-typedef struct node node;
-
-struct node {
-  int id;
-  double priority;
-};
-
-struct pq_struct {
-  int capacity;
-  int size;
-  int status;
-  int *posArray;
-  node *pqArray;
-};
-
-PQ *pq_create(int capacity) {
-  PQ *pq = (PQ *)malloc(sizeof(PQ));
-  pq->capacity = capacity;
-  pq->size = 0;
-  pq->status = 0;
-  pq->posArray = (int *)malloc(capacity * sizeof(int));
-  pq->pqArray = (node *)malloc(capacity * sizeof(node));
-  return pq;
-}
+#define INT_MAX 2147483647
 
 int number_of_nodes = 0;
 int graph[MAX_NODES][MAX_NODES];
@@ -75,6 +49,113 @@ void print_graph() {
   }
 }
 
+void print_table(int (*table)[3]) {
+  for (int i = 0; i < number_of_nodes; i++) {
+    for (int j = 0; j < 3; j++) {
+      if (j == 1) {
+        printf("%d ", table[i][j]);
+      } else {
+        printf("%s ", nodes[table[i][j]]);
+      }
+    }
+    printf("\n");
+  }
+}
+
+int (*dijkstra(char *initialNode, int (*adj)[20]))[3] {
+  int(*table)[3] = malloc(number_of_nodes * sizeof(*table));
+  int visited[number_of_nodes];
+  int unvisited[number_of_nodes];
+
+  // buscamos el nodo inicial
+  int index = get_index_of_node(initialNode);
+  if (index == -1) {
+    printf("El nodo inicial no existe\n");
+    return table;
+  }
+
+  // inicializamos la tabla
+  for (int i = 0; i < number_of_nodes; i++) {
+    table[i][0] = i;       // nodo
+    table[i][1] = INT_MAX; // distancia
+    table[i][2] = -1;      // nodo previo
+    visited[i] = 0;
+  }
+
+  // inicializamos los nodos no visitados
+  for (int i = 0; i < number_of_nodes; i++) {
+    unvisited[i] = 0;
+  }
+
+  // inicializamos el nodo inicial
+  table[index][1] = 0;
+  table[index][2] = -1;
+  visited[index] = 1;
+
+  // agregamos los vecinos del nodo inicial a los nodos no visitados
+  int unvisited_nodes = 0;
+  for (int i = 0; i < number_of_nodes; i++) {
+    if (adj[index][i] != 0) {
+      unvisited[i] = 1;
+      ++unvisited_nodes;
+    }
+  }
+
+  // mientras haya nodos no visitados
+  printf("unvisited_nodes: %d\n", unvisited_nodes);
+  while (unvisited_nodes > 0) {
+    // buscamos el nodo no visitado con menor distancia
+    int min = INT_MAX;
+    int min_index = -1;
+    for (int i = 0; i < number_of_nodes; i++) {
+      if (unvisited[i] == 1 && table[i][1] < min) {
+        min = table[i][1];
+        min_index = i;
+      }
+    }
+
+    // si no hay nodos no visitados con distancia menor a infinito
+    if (min_index == -1) {
+      break;
+    }
+
+    // marcamos el nodo como visitado
+    visited[min_index] = 1;
+    unvisited[min_index] = 0;
+    --unvisited_nodes;
+
+    // para cada vecino del nodo
+    for (int i = 0; i < number_of_nodes; i++) {
+      // si el vecino no ha sido visitado
+      if (adj[min_index][i] != 0 && visited[i] == 0) {
+        // si la distancia del nodo actual más la distancia al vecino es menor a la distancia del vecino
+        if (table[min_index][1] + adj[min_index][i] < table[i][1]) {
+          // actualizamos la distancia del vecino
+          table[i][1] = table[min_index][1] + adj[min_index][i];
+          // actualizamos el nodo previo del vecino
+          table[i][2] = min_index;
+        }
+        // agregamos el vecino a los nodos no visitados
+        unvisited[i] = 1;
+        ++unvisited_nodes;
+      }
+    }
+  }
+
+  for (int i = 0; i < number_of_nodes; i++) {
+    printf("%d\n", visited[i]);
+  }
+
+  for (int i = 0; i < number_of_nodes; i++) {
+    printf("%d %d %d \n", table[i][0], table[i][1], table[i][2]);
+  }
+
+  return table;
+}
+
+// implementemos el algoritmo de Dijkstra
+// Dijkstra's algorithm in C
+// https://www.programiz.com/dsa/dijkstra-algorithm
 // argc es el número de argumentos que se le pasan al programa incluyendo el nombre del programa
 // argv es un array de strings que contiene los argumentos que se le pasan al programa
 int main(int argc, char *argv[]) {
@@ -178,4 +259,6 @@ int main(int argc, char *argv[]) {
   // Cerramos el fichero
   fclose(fp);
   print_graph();
+  int(*table)[3] = dijkstra("A", graph);
+  print_table(table);
 }
