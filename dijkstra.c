@@ -389,8 +389,8 @@ int (*dijkstra(char *initialNode, int (*adj)[20]))[3] {
 
 int (*dijkstra_with_heap(char *initialNode, int (*adj)[20]))[3] {
   int(*table)[3] = malloc(number_of_nodes * sizeof(*table)); // tabla de distancias
-  PQ *pq = pq_create(MAX_NODES, 1);
-  int visited[number_of_nodes]; // nodos visitados
+  PQ *pq = pq_create(MAX_NODES, 1);                          // cola de prioridad
+  int visited[number_of_nodes];                              // nodos visitados
 
   // buscamos el nodo inicial
   int index = get_index_of_node(initialNode);
@@ -427,9 +427,9 @@ int (*dijkstra_with_heap(char *initialNode, int (*adj)[20]))[3] {
             table[i][2] = index;
           }
         } else {
-          priority = table[index][1] + adj[index][i];
+          priority = table[index][1] + adj[index][i]; // priority = distance
           pq_insert(pq, i, priority);
-          table[i][1] = priority;
+          table[i][1] = priority; // actualizamos la distancia del vecino
           // actualizamos el nodo previo del vecino
           table[i][2] = index;
         }
