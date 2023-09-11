@@ -6,6 +6,260 @@
 #define MAX_NODES 20
 #define INT_MAX 2147483647
 
+typedef struct pq_struct PQ;
+
+typedef struct node node;
+
+struct node {
+  int id;
+  int priority;
+};
+
+struct pq_struct {
+  int capacity;
+  int size;
+  int status;
+  int *posArray;
+  node *pqArray;
+};
+
+PQ *pq_create(int capacity, int min_heap) {
+  PQ *pq = (PQ *)malloc(sizeof(PQ)); // Allocate memory for the PQ struct
+  pq->capacity = capacity;
+  pq->size = 0;
+  pq->status = min_heap;
+  pq->posArray = (int *)malloc(capacity * sizeof(int));  // Allocate memory for the posArray (array of positions)
+  pq->pqArray = (node *)malloc(capacity * sizeof(node)); // Allocate memory for the pqArray (array of nodes)
+  return pq;
+}
+
+void pq_destroy(PQ *pq) {
+  free(pq->posArray);
+  free(pq->pqArray);
+  free(pq);
+}
+
+/* int pq_is_empty(PQ *pq) {
+  if (pq->size == 0) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+int pq_is_full(PQ *pq) {
+  if (pq->size == pq->capacity) {
+    return 1;
+  } else {
+    return 0;
+  }
+} */
+
+int pq_insert(PQ *pq, int id, int priority) {
+  if ((((pq->size) + 1) > pq->capacity) || id > pq->capacity || id < 0 || pq->posArray[id] != -1) // If the PQ is full or the id is out of range or the id is already in the PQ
+    return 0;
+  pq->size++;                                // Increment the size of the PQ by 1
+  pq->pqArray[pq->size].id = id;             // Set the id of the node in the last position of the PQ
+  pq->pqArray[pq->size].priority = priority; // Set the priority of the node in the last position of the PQ
+  pq->posArray[id] = pq->size;               // Set the position of the node in the posArray
+  return 1;                                  // Return 1 if the node has been inserted
+}
+
+PQ *percolate_up(PQ *pq, int root) {
+  int parent = root / 2;
+  if (parent < 1)
+    return pq;
+
+  int idRoot = pq->pqArray[root].id;
+  int idParent = pq->pqArray[parent].id;
+
+  if (pq->status != 0) { // if it is a min heap
+
+    if (pq->pqArray[root].priority <= pq->pqArray[parent].priority) {
+      node temp;
+      temp = pq->pqArray[parent];
+
+      pq->pqArray[parent] = pq->pqArray[root]; // swap in heap array
+      pq->pqArray[root] = temp;
+
+      pq->posArray[idRoot] = parent; // swap in pos array
+      pq->posArray[idParent] = root;
+
+      return percolate_up(pq, parent);
+    } else
+      return pq;
+  } else { // else it is a max heap
+
+    if (pq->pqArray[root].priority >= pq->pqArray[parent].priority) {
+      node temp;
+      temp = pq->pqArray[parent];
+
+      pq->pqArray[parent] = pq->pqArray[root]; // swap in heap array
+      pq->pqArray[root] = temp;
+
+      pq->posArray[idRoot] = parent; // swap in pos array
+      pq->posArray[idParent] = root;
+
+      return percolate_up(pq, parent);
+    } else
+      return pq;
+  }
+}
+
+PQ *percolate_down(PQ *pq, int root) {
+  if ((root * 2) > pq->size) // if the root has no children
+    return pq;
+
+  int chosen;
+  int idRoot = pq->pqArray[root].id;
+  int idChosen;
+
+  if (pq->status != 0) { // if it is a min heap
+    if (pq->pqArray[root * 2].priority < pq->pqArray[(root * 2) + 1].priority)
+      chosen = root * 2;
+    else
+      chosen = (root * 2) + 1;
+
+    idChosen = pq->pqArray[chosen].id;
+
+    if (pq->pqArray[root].priority >= pq->pqArray[chosen].priority) {
+      node temp;
+      temp = pq->pqArray[chosen];
+
+      pq->pqArray[chosen] = pq->pqArray[root]; // swap in heap array
+      pq->pqArray[root] = temp;
+
+      pq->posArray[idChosen] = root; // swap in pos array
+      pq->posArray[idRoot] = chosen;
+
+      return percolate_down(pq, chosen);
+    } else
+      return pq;
+  } else { // else it is a max heap
+
+    if (pq->pqArray[root * 2].priority > pq->pqArray[(root * 2) + 1].priority)
+      chosen = root * 2;
+    else
+      chosen = (root * 2) + 1;
+
+    idChosen = pq->pqArray[chosen].id;
+
+    if (pq->pqArray[root].priority <= pq->pqArray[chosen].priority) {
+      node temp;
+      temp = pq->pqArray[chosen];
+
+      pq->pqArray[chosen] = pq->pqArray[root]; // swap
+      pq->pqArray[root] = temp;
+
+      pq->posArray[idChosen] = root; // swap in pos array
+      pq->posArray[idRoot] = chosen;
+
+      return percolate_down(pq, chosen);
+    } else
+      return pq;
+  }
+}
+
+int pq_change_priority(PQ *pq, int id, int new_priority) {
+  if (id > pq->capacity || id < 0 || pq->posArray[id] == -1)
+    return 0;
+
+  int posID = pq->posArray[id];
+  int old_priority = pq->pqArray[posID].priority;
+
+  if (new_priority == old_priority)
+    return 0;
+
+  pq->pqArray[posID].priority = new_priority; // update priority
+
+  if (pq->status != 0) { // it is a min heap
+
+    if (new_priority > old_priority)
+      pq = percolate_down(pq, posID);
+    else
+      pq = percolate_up(pq, posID);
+  }
+
+  else { // it is a max heap
+
+    if (new_priority > old_priority)
+      pq = percolate_up(pq, posID);
+    else
+      pq = percolate_down(pq, posID);
+  }
+
+  return 1;
+}
+
+int pq_remove_by_id(PQ *pq, int id) {
+  if (((pq->size) < 1) || id > pq->capacity || id < 0 || pq->posArray[id] == -1)
+    return 0;
+
+  int posID = pq->posArray[id];
+
+  int idLastElem = pq->pqArray[pq->size].id;
+
+  pq->pqArray[posID] = pq->pqArray[pq->size]; // swap in the node array
+
+  pq->posArray[idLastElem] = posID; // update the pos array
+
+  pq->posArray[id] = -1; // reset the id in the pos array
+
+  pq->size--; // reduce the size since you're removing an element
+
+  pq = percolate_down(pq, posID);
+
+  return 1;
+}
+
+int pq_get_priority(PQ *pq, int id, int *priority) {
+  if (id > pq->capacity || id < 0 || pq->posArray[id] == -1)
+    return 0;
+
+  int pos = pq->posArray[id];
+  *priority = pq->pqArray[pos].priority;
+
+  return 1;
+}
+
+int pq_delete_top(PQ *pq, int *id, int *priority) {
+  if (pq->size < 1)
+    return 0;
+
+  *id = pq->pqArray[1].id;
+
+  *priority = pq->pqArray[1].priority;
+
+  int lastElemId = pq->pqArray[pq->size].id;
+
+  pq->posArray[*id] = -1; // reset the top elem
+
+  pq->pqArray[1] = pq->pqArray[pq->size]; // swap in the node array
+
+  pq->posArray[lastElemId] = 1;
+
+  pq->size--; // decrement the size
+
+  pq = percolate_down(pq, 1);
+
+  return 1;
+}
+
+int pq_capacity(PQ *pq) {
+  return pq->capacity;
+}
+
+int pq_size(PQ *pq) {
+  return pq->size;
+}
+
+int pq_contains(PQ *pq, int id) {
+  if (pq->posArray[id] == -1)
+    return 0;
+  else
+    return 1;
+}
+
 int number_of_nodes = 0;
 int graph[MAX_NODES][MAX_NODES];
 char *nodes[MAX_NODES];
@@ -63,9 +317,9 @@ void print_table(int (*table)[3]) {
 }
 
 int (*dijkstra(char *initialNode, int (*adj)[20]))[3] {
-  int(*table)[3] = malloc(number_of_nodes * sizeof(*table));
-  int visited[number_of_nodes];
-  int unvisited[number_of_nodes];
+  int(*table)[3] = malloc(number_of_nodes * sizeof(*table)); // tabla de distancias
+  int visited[number_of_nodes];                              // nodos visitados
+  int unvisited_neighbours[number_of_nodes];                 // nodos no visitados vecinos de un nodo visitado
 
   // buscamos el nodo inicial
   int index = get_index_of_node(initialNode);
@@ -84,72 +338,105 @@ int (*dijkstra(char *initialNode, int (*adj)[20]))[3] {
 
   // inicializamos los nodos no visitados
   for (int i = 0; i < number_of_nodes; i++) {
-    unvisited[i] = 0;
+    unvisited_neighbours[i] = 0;
   }
-
-  // inicializamos el nodo inicial
-  table[index][1] = 0;
-  table[index][2] = -1;
-  visited[index] = 1;
-
-  // agregamos los vecinos del nodo inicial a los nodos no visitados
-  int unvisited_nodes = 0;
-  for (int i = 0; i < number_of_nodes; i++) {
-    if (adj[index][i] != 0) {
-      unvisited[i] = 1;
-      ++unvisited_nodes;
-    }
-  }
-
   // mientras haya nodos no visitados
-  printf("unvisited_nodes: %d\n", unvisited_nodes);
+  int unvisited_nodes = 1; // el nodo inicial
+  table[index][1] = 0;     // la distancia del nodo inicial es 0
   while (unvisited_nodes > 0) {
+    visited[index] = 1;
+    unvisited_neighbours[index] = 0;
+    --unvisited_nodes;
+    // para cada vecino del nodo
+    for (int i = 0; i < number_of_nodes; i++) {
+      // si el vecino no ha sido visitado
+      if (adj[index][i] != 0 && visited[i] == 0) {
+        // si la distancia del nodo actual más la distancia al vecino es menor a la distancia del vecino
+        if (table[index][1] + adj[index][i] < table[i][1]) {
+          // actualizamos la distancia del vecino
+          table[i][1] = table[index][1] + adj[index][i];
+          // actualizamos el nodo previo del vecino
+          table[i][2] = index;
+        }
+        // agregamos el vecino a los nodos no visitados
+        unvisited_neighbours[i] = 1;
+        ++unvisited_nodes;
+      }
+    }
     // buscamos el nodo no visitado con menor distancia
     int min = INT_MAX;
     int min_index = -1;
     for (int i = 0; i < number_of_nodes; i++) {
-      if (unvisited[i] == 1 && table[i][1] < min) {
-        min = table[i][1];
+      if (unvisited_neighbours[i] == 1 && table[index][1] < min) {
+        min = table[index][i];
         min_index = i;
       }
     }
-
     // si no hay nodos no visitados con distancia menor a infinito
     if (min_index == -1) {
       break;
     }
+    index = min_index;
+  }
 
-    // marcamos el nodo como visitado
-    visited[min_index] = 1;
-    unvisited[min_index] = 0;
+  return table;
+}
+
+// dijkstra con heap
+int (*dijkstra_with_heap(char *initialNode, int (*adj)[20]))[3] {
+  PQ *pq = pq_create(MAX_NODES, 1);                          // heap
+  int(*table)[3] = malloc(number_of_nodes * sizeof(*table)); // tabla de distancias
+  int visited[number_of_nodes];                              // nodos visitados
+  int unvisited_neighbours[number_of_nodes];                 // nodos no visitados vecinos de un nodo visitado
+  printf("pq_capacity: %d\n", pq_capacity(pq));
+  // buscamos el nodo inicial
+  int index = get_index_of_node(initialNode);
+  if (index == -1) {
+    printf("El nodo inicial no existe\n");
+    return table;
+  }
+
+  // inicializamos la tabla
+  for (int i = 0; i < number_of_nodes; i++) {
+    pq_insert(pq, i, INT_MAX - i); // distancia
+  }
+  printf("sadasdf");
+
+  return table;
+  // inicializamos los nodos no visitados
+  for (int i = 0; i < number_of_nodes; i++) {
+    unvisited_neighbours[i] = 0;
+  }
+
+  // mientras haya nodos no visitados
+  int unvisited_nodes = 1;          // el nodo inicial
+  pq_change_priority(pq, index, 0); // la distancia del nodo inicial es 0
+  while (unvisited_nodes > 0) {
+    int id;
+    int priority;
+    pq_delete_top(pq, &id, &priority);
+    printf("id: %d, priority: %d, node: %s\n", id, priority, nodes[id]);
+    table[id][1] = priority;
+    visited[id] = 1;
+    unvisited_neighbours[id] = 0;
     --unvisited_nodes;
-
     // para cada vecino del nodo
     for (int i = 0; i < number_of_nodes; i++) {
       // si el vecino no ha sido visitado
-      if (adj[min_index][i] != 0 && visited[i] == 0) {
+      if (adj[id][i] != 0 && visited[i] == 0) {
         // si la distancia del nodo actual más la distancia al vecino es menor a la distancia del vecino
-        if (table[min_index][1] + adj[min_index][i] < table[i][1]) {
+        if (priority + adj[id][i] < pq->pqArray[pq->posArray[i]].priority) {
           // actualizamos la distancia del vecino
-          table[i][1] = table[min_index][1] + adj[min_index][i];
+          pq_change_priority(pq, i, priority + adj[id][i]);
           // actualizamos el nodo previo del vecino
-          table[i][2] = min_index;
+          table[i][2] = id;
         }
         // agregamos el vecino a los nodos no visitados
-        unvisited[i] = 1;
+        unvisited_neighbours[i] = 1;
         ++unvisited_nodes;
       }
     }
   }
-
-  for (int i = 0; i < number_of_nodes; i++) {
-    printf("%d\n", visited[i]);
-  }
-
-  for (int i = 0; i < number_of_nodes; i++) {
-    printf("%d %d %d \n", table[i][0], table[i][1], table[i][2]);
-  }
-
   return table;
 }
 
@@ -259,6 +546,13 @@ int main(int argc, char *argv[]) {
   // Cerramos el fichero
   fclose(fp);
   print_graph();
+  printf("\n");
+  printf("Djikstra sin heap\n");
   int(*table)[3] = dijkstra("A", graph);
   print_table(table);
+  free(table);
+  printf("\n");
+  printf("Djikstra con heap\n");
+  int(*table2)[3] = dijkstra_with_heap("A", graph);
+  print_table(table2);
 }
