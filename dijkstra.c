@@ -58,16 +58,6 @@ int pq_is_full(PQ *pq) {
   }
 } */
 
-int pq_insert(PQ *pq, int id, int priority) {
-  if (((pq->size + 1) > pq->capacity) || id > pq->capacity || id < 0 || pq->posArray[id] != -1) // If the PQ is full or the id is out of range or the id is already in the PQ
-    return 0;
-  pq->size++;                                // Increment the size of the PQ by 1
-  pq->pqArray[pq->size].id = id;             // Set the id of the node in the last position of the PQ
-  pq->pqArray[pq->size].priority = priority; // Set the priority of the node in the last position of the PQ
-  pq->posArray[id] = pq->size;               // Set the position of the node in the posArray
-  return 1;                                  // Return 1 if the node has been inserted
-}
-
 PQ *percolate_up(PQ *pq, int root) {
   int parent = root / 2;
   if (parent < 1)
@@ -107,6 +97,17 @@ PQ *percolate_up(PQ *pq, int root) {
     } else
       return pq;
   }
+}
+
+int pq_insert(PQ *pq, int id, int priority) {
+  if (((pq->size + 1) > pq->capacity) || id > pq->capacity || id < 0 || pq->posArray[id] != -1) // If the PQ is full or the id is out of range or the id is already in the PQ
+    return 0;
+  pq->size++;                                // Increment the size of the PQ by 1
+  pq->pqArray[pq->size].id = id;             // Set the id of the node in the last position of the PQ
+  pq->pqArray[pq->size].priority = priority; // Set the priority of the node in the last position of the PQ
+  pq->posArray[id] = pq->size;               // Set the position of the node in the posArray
+  percolate_up(pq, pq->size);                // Percolate up the node
+  return 1;                                  // Return 1 if the node has been inserted
 }
 
 PQ *percolate_down(PQ *pq, int root) {
@@ -304,6 +305,14 @@ void print_graph() {
     }
     printf("\n");
   }
+}
+
+void print_nodes() {
+  printf("Nodos: ");
+  for (int i = 0; i < number_of_nodes; i++) {
+    printf("%s ", nodes[i]);
+  }
+  printf("\n");
 }
 
 void print_table(int (*table)[3]) {
@@ -538,14 +547,27 @@ int main(int argc, char *argv[]) {
   // Cerramos el fichero
   fclose(fp);
   print_graph();
+  print_nodes();
+  char nodoInicial[255];
+  int index = -1;
+  while (index == -1) {
+    printf("Ingrese el nodo inicial: ");
+    scanf("%s", nodoInicial);
+    printf("Nodo inicial: %s\n", nodoInicial);
+    index = get_index_of_node(nodoInicial);
+    if (index == -1) {
+      printf("El nodo inicial no existe\n");
+    }
+  }
+
   printf("\n");
   printf("Djikstra sin heap\n");
-  int(*table)[3] = dijkstra("A", graph);
+  int(*table)[3] = dijkstra(nodoInicial, graph);
   print_table(table);
   free(table);
   printf("\n");
   printf("Djikstra con heap\n");
-  int(*table2)[3] = dijkstra_with_heap("A", graph);
+  int(*table2)[3] = dijkstra_with_heap(nodoInicial, graph);
   print_table(table2);
   free(table2);
 
